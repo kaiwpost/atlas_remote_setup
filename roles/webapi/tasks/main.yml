@@ -1,0 +1,70 @@
+- name: install jdk, maven, tomcat
+  apt:
+    name:
+      - default-jdk
+      - maven
+      - tomcat8
+    state: latest
+    update_cache: true
+  tags: packages
+
+- name: clone ohdsi webapi
+  git:
+    repo: https://github.com/OHDSI/WebAPI.git
+    dest: "/home/{{ user_name }}/WebAPI"
+  become: true
+  become_user: vagrant
+
+- name: copy settings.xml file to remote server
+  copy:
+    src: "{{ role_path }}/files/settings.xml"
+    dest: "/home/{{ user_name }}/WebAPI/WebAPIConfig/"
+  become: true
+  become_user: vagrant
+
+- name: build WebAPI
+  command: mvn clean package -s WebAPIConfig/settings.xml -P webapi-postgresql
+  args:
+    chdir: "/home/{{ user_name }}/WebAPI"
+    creates: "/home/{{ user_name }}/WebAPI/target/WebAPI.war"
+  environment:
+    # TODO set this dynamically instead of hard-coding
+    # export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:/bin/javac::")
+    JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+  become: true
+  become_user: vagrant
+
+- name: deploy WAR
+  command: "cp /home/{{ user_name }}/WebAPI/target/WebAPI.war /var/lib/tomcat8/webapps/"
+  args:
+    creates: "/var/lib/tomcat8/webapps/WebAPI.war"
+
+- name: restart tomcat
+  service:
+    name: tomcat8
+    state: restarted
+
+- name: wait for tomcat to come back up
+  wait_for: port=8080 delay=5
+
+- name: confirm WebAPI is back up
+  uri: url=http://localhost:8080 return_content=true timeout=300
+  register: response
+  failed_when: "'It works !' not in response.content"
+
+# TODO sub out all of the sql statements below with a template, since contain password, user name
+# TODO not going to do this step since inserting real data later.
+#- name: select insert into webapi.source
+#  command: psql ohdsi -c "WITH data(source_id, source_name, source_key, source_connection, source_dialect) AS (VALUES (1, 'My Cdm', 'MY_CDM', 'jdbc:postgresql://localhost:5432/ohdsi?user=ohdsi_app_user>&password=app1', 'postgresql'), (2, 'Default vocabulary', 'vocab', 'jdbc:postgresql://localhost:5432/ohdsi?user=ohdsi_app_user>&password=app1', 'postgresql')) INSERT INTO webapi.source (source_id, source_name, source_key, source_connection, source_dialect) SELECT source_id, source_name, source_key, source_connection, source_dialect FROM data d WHERE NOT exists(SELECT 1 FROM webapi.source s WHERE s.source_id = d.source_id);"
+#  become: true
+#  become_user: postgres
+#
+#- name: select insert into webapi.source_daimon
+#  command: psql ohdsi -c "WITH data(source_daimon_id, source_id, daimon_type, table_qualifier, priority) AS (VALUES (1,1,0, 'cdm', 0), (2,1,1, 'cdm', 0), (3,1,2, 'ohdsi', 0), (4,2,1, 'cdm', 1) ) INSERT INTO webapi.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority) SELECT source_daimon_id, source_id, daimon_type, table_qualifier, priority FROM data d WHERE NOT exists(SELECT 1 FROM webapi.source_daimon s WHERE s.source_daimon_id = d.source_daimon_id);"
+#  become: true
+#  become_user: postgres
+
+- name: restart tomcat
+  service:
+    name: tomcat8
+    state: restarted

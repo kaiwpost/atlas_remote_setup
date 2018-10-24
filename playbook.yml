@@ -1,5 +1,5 @@
 ---
-- name: Create a PostgreSQL DB server
+- name: Create Atlas stack
   hosts: all
   become: yes
   become_user: root
@@ -10,3 +10,9 @@
 
   roles:
   - createdb
+  - postgres_remote_access
+  - webapi
+  - atlas
+#  - load_synpuf5pct
+  - load_synpuf1k
+  - achilles

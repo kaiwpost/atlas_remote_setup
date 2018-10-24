@@ -1,0 +1,35 @@
+- name: install packages
+  apt:
+    name:
+    - zip
+    - unzip
+    state: latest
+    update_cache: true
+
+- name: Download latest atlas release
+  unarchive:
+    src: https://github.com/OHDSI/Atlas/archive/released.zip
+    dest: /tmp/
+    remote_src: yes
+
+- name: deploy app
+  synchronize:
+    src: /tmp/Atlas-released/
+    dest: /var/lib/tomcat8/webapps/atlas/
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: copy local config
+  copy:
+    src: "{{ role_path }}/files/config-local.js"
+    dest: /var/lib/tomcat8/webapps/atlas/js/
+
+- name: restart tomcat
+  service: name=tomcat8 state=restarted
+
+- name: wait for tomcat to come back up
+  wait_for: port=8080 delay=5
+
+- name: confirm WebAPI is back up
+  uri: url=http://localhost:8080 return_content=true timeout=300
+  register: response
+  failed_when: "'It works !' not in response.content"

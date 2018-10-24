@@ -1,0 +1,43 @@
+// TODO check this again webapi query
+[
+  {
+    "sourceId": 1,
+    "sourceName": "My Cdm",
+    "sourceDialect": "postgresql",
+    "sourceKey": "MY_CDM",
+    "daimons": [
+      {
+        "sourceDaimonId": 1,
+        "daimonType": "CDM",
+        "tableQualifier": "cdm",
+        "priority": 0
+      },
+      {
+        "sourceDaimonId": 2,
+        "daimonType": "Vocabulary",
+        "tableQualifier": "cdm",
+        "priority": 0
+      },
+      {
+        "sourceDaimonId": 3,
+        "daimonType": "Results",
+        "tableQualifier": "ohdsi",
+        "priority": 0
+      }
+    ]
+  },
+  {
+    "sourceId": 2,
+    "sourceName": "Default vocabulary",
+    "sourceDialect": "postgresql",
+    "sourceKey": "vocab",
+    "daimons": [
+      {
+        "sourceDaimonId": 4,
+        "daimonType": "Vocabulary",
+        "tableQualifier": "cdm",
+        "priority": 1
+      }
+    ]
+  }
+]

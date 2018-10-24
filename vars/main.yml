@@ -1,4 +1,5 @@
 ---
-db_user: dbusername
 db_name: dbname
-db_password: dbpassword
+db_admin_user: ohdsi_admin
+db_admin_password: dbpassword
+user_name: vagrant

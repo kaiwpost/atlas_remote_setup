@@ -1,0 +1,93 @@
+- name:
+  apt:
+    name:
+    - zip
+    - unzip
+    state: latest
+    update_cache: true
+
+- name: download synpuf5pct file
+  script: "{{role_path}}/files/synpuf5_downloader.sh"
+  args:
+    creates: "/home/{{ user_name }}/synpuf5pct_20180710.zip"
+
+- name: create ohdsi dir
+  file:
+    dest: "/home/{{ user_name }}/ohdsi"
+    state: directory
+
+- name: extract synpuf5pct file
+  unarchive:
+    src: "/home/{{ user_name }}/synpuf5pct_20180710.zip"
+    dest: "/home/{{ user_name }}/ohdsi"
+    remote_src: yes
+    creates: "/home/{{ user_name }}/ohdsi/README.md"
+
+- name: copy sql scripts to remote
+  copy:
+    src: "{{ item }}"
+    dest: "/home/{{ user_name }}/ohdsi/sql/"
+  with_fileglob:
+  - "{{ role_path }}/files/*.sql"
+
+- name: clone cdm repo
+  git:
+   repo: https://github.com/OHDSI/CommonDataModel.git
+   dest: "/home/{{ user_name }}/ohdsi/common_data_model"
+   version: v5.2.2
+
+- name: find files sql files in cdm repo
+  find:
+    paths: "/home/{{ user_name }}/ohdsi/common_data_model/PostgreSQL/"
+    patterns: "*.sql"
+    recurse: yes
+  register: files_matched_subdirectory
+
+- name: copy cdm sql to shared repo
+  copy:
+    src: "{{ item.path }}"
+    dest: "/home/{{ user_name }}/ohdsi/sql/"
+    remote_src: yes
+  with_items:
+    - "{{ files_matched_subdirectory.files }}"
+
+## TODO these are not idempotent right now. rerunning causes issues
+- name: create synpuf schema
+  command: psql ohdsi -c "CREATE SCHEMA IF NOT EXISTS synpuf5pct;"
+  become: true
+  become_user: postgres
+
+- name: OMOP DDL
+  command: psql ohdsi -f "/home/{{user_name}}/ohdsi/sql/OMOP CDM ddl - PostgreSQL.sql"
+  become: true
+  become_user: postgres
+  environment:
+    PGOPTIONS: --search_path=synpuf5pct
+
+- name: load data
+  command: psql ohdsi -f "/home/{{user_name}}/ohdsi/sql/load_data.sql"
+  become: true
+  become_user: postgres
+  environment:
+    PGOPTIONS: --search_path=synpuf5pct
+
+- name: OMOP CDM constraints
+  command: psql ohdsi -f "/home/{{user_name}}/ohdsi/sql/OMOP CDM constraints - PostgreSQL.sql"
+  become: true
+  become_user: postgres
+  environment:
+    PGOPTIONS: --search_path=synpuf5pct
+
+- name: OMOP CDM indexes
+  command: psql ohdsi -f "/home/{{user_name}}/ohdsi/sql/OMOP CDM indexes required - PostgreSQL.sql"
+  become: true
+  become_user: postgres
+  environment:
+    PGOPTIONS: --search_path=synpuf5pct
+
+- name: link tables to data
+  command: psql ohdsi -f "/home/{{user_name}}/ohdsi/sql/link_api.sql"
+  become: true
+  become_user: postgres
+  environment:
+    PGOPTIONS: --search_path=synpuf5pct

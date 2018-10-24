@@ -1,4 +1,4 @@
-- name: Ensure bash, OpenSSl, and libssl are the latest versions
+- name: ensure bash, OpenSSl, and libssl are the latest versions
   apt:
     name:
     - bash
@@ -9,11 +9,19 @@
     update_cache: true
   tags: packages
 
-- name: Install PostgreSQL
+- name: add an Apt signing key, uses whichever key is at the URL
+  apt_key:
+    url: http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc
+
+- name: add postgres repo
+  apt_repository:
+    repo: deb https://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+
+- name: install PostgreSQL
   apt:
     name:
-    - postgresql
-    - postgresql-contrib
+    - postgresql-11
+    - postgresql-contrib-11
     - libpq-dev
     - python-psycopg2
     state: latest
@@ -21,26 +29,153 @@
   tags: packages
 
 - name: ensure the PostgreSQL service is running
-  service: name=postgresql state=started enabled=yes
-  become: yes
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+  become: true
   become_user: postgres
 
-- name: ensure database is created
-  postgresql_db: name={{ db_name }}
-  become: yes
+
+- name: create users / groups
+  block:
+    - name: create ohdsi_admin role
+      postgresql_user:
+        name: ohdsi_admin
+        role_attr_flags: CREATEDB,REPLICATION
+
+    - name: create ohdsi_app role
+      postgresql_user:
+        name: ohdsi_app
+
+    - name: create ohdsi_admin_user
+      postgresql_user:
+        name: ohdsi_admin_user
+        # TODO use vault instead
+        password: admin1
+        expires: infinity
+
+
+    - name: create ohdsi_app_user
+      postgresql_user:
+        name: ohdsi_app_user
+        # TODO use vault instead
+        password: app1
+        expires: infinity
+  become: true
   become_user: postgres
 
-- name: ensure user has access to database
-  postgresql_user: db={{ db_name }} name={{ db_user }} password={{ db_password }} priv=ALL
-  become: yes
+- name: create db
+  block:
+    - postgresql_db:
+        name: ohdsi
+
+    - name: assign ohsdi_app_user to ohdsi_app group
+      postgresql_privs:
+        db: ohdsi
+        roles: ohdsi_app_user
+        objs: ohdsi_app
+        type: group
+
+    - name: assign ohsdi_admin_user to ohdsi_admin group
+      postgresql_privs:
+        db: ohdsi
+        roles: ohdsi_admin_user
+        objs: ohdsi_admin
+        type: group
+
+    - name: grant ALL to ohdsi_admin
+      postgresql_privs:
+        db: ohdsi
+        privs: ALL
+        type: database
+        role: ohdsi_admin
+
+    - name: grant ALL to ohdsi_admin
+      postgresql_privs:
+        db: ohdsi
+        privs: CONNECT,TEMPORARY
+        type: database
+        role: ohdsi_app
+  become: true
   become_user: postgres
 
-- name: ensure user does not have unnecessary privilege
-  postgresql_user: name={{ db_user }} role_attr_flags=NOSUPERUSER,NOCREATEDB
-  become: yes
+- name: create schema + assign privileges
+  block:
+    - postgresql_schema:
+        name: webapi
+        database: ohdsi
+        owner: ohdsi_admin
+
+    - postgresql_privs:
+        db: ohdsi
+        privs: ALL
+        type: schema
+        objs: webapi
+        role: ohdsi_admin
+
+    - postgresql_privs:
+        db: ohdsi
+        privs: USAGE
+        type: schema
+        objs: webapi
+        role: PUBLIC
+
+    - postgresql_privs:
+        db: ohdsi
+        privs: USAGE
+        type: schema
+        objs: webapi
+        role: ohdsi_app
+  become: true
   become_user: postgres
 
-- name: ensure no other user can access the database
-  postgresql_privs: db={{ db_name }} role=PUBLIC type=database priv=ALL state=absent
-  become: yes
+- name: alter default privileges
+  block:
+    - postgresql_privs:
+        db: ohdsi
+        objs: TABLES
+        login: ohdsi_admin_user
+        # TODO get rid of host and PGPASSWORD below
+        host: 127.0.0.1
+        privs: INSERT,SELECT,UPDATE,DELETE,REFERENCES,TRIGGER
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+
+    - postgresql_privs:
+        db: ohdsi
+        login: ohdsi_admin_user
+        # TODO get rid of host and PGPASSWORD below
+        host: 127.0.0.1
+        objs: SEQUENCES
+        privs: SELECT,USAGE
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+
+    - postgresql_privs:
+        db: ohdsi
+        login: ohdsi_admin_user
+        # TODO get rid of host and PGPASSWORD below
+        host: 127.0.0.1
+        objs: FUNCTIONS
+        privs: EXECUTE
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+
+    - postgresql_privs:
+        db: ohdsi
+        login: ohdsi_admin_user
+        # TODO get rid of host and PGPASSWORD below
+        host: 127.0.0.1
+        objs: TYPES
+        privs: USAGE
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+  become: true
   become_user: postgres
+  environment:
+    PGPASSWORD: admin1
