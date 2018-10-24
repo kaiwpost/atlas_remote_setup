@@ -1,0 +1,12 @@
+---
+- name: Create a PostgreSQL DB server
+  hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  remote_user: ubuntu
+  vars_files:
+    - vars/main.yml
+
+  roles:
+  - createdb

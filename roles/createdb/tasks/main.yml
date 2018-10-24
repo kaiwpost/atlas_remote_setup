@@ -1,0 +1,46 @@
+- name: Ensure bash, OpenSSl, and libssl are the latest versions
+  apt:
+    name:
+    - bash
+    - openssl
+    - libssl-dev
+    - libssl-doc
+    state: latest
+    update_cache: true
+  tags: packages
+
+- name: Install PostgreSQL
+  apt:
+    name:
+    - postgresql
+    - postgresql-contrib
+    - libpq-dev
+    - python-psycopg2
+    state: latest
+    update_cache: true
+  tags: packages
+
+- name: ensure the PostgreSQL service is running
+  service: name=postgresql state=started enabled=yes
+  become: yes
+  become_user: postgres
+
+- name: ensure database is created
+  postgresql_db: name={{ db_name }}
+  become: yes
+  become_user: postgres
+
+- name: ensure user has access to database
+  postgresql_user: db={{ db_name }} name={{ db_user }} password={{ db_password }} priv=ALL
+  become: yes
+  become_user: postgres
+
+- name: ensure user does not have unnecessary privilege
+  postgresql_user: name={{ db_user }} role_attr_flags=NOSUPERUSER,NOCREATEDB
+  become: yes
+  become_user: postgres
+
+- name: ensure no other user can access the database
+  postgresql_privs: db={{ db_name }} role=PUBLIC type=database priv=ALL state=absent
+  become: yes
+  become_user: postgres
