@@ -1,5 +1,25 @@
 ---
-db_name: dbname
-db_admin_user: ohdsi_admin
-db_admin_password: dbpassword
-user_name: vagrant
+
+# TODO search for all vars in here for hard coding
+# download dir
+download_dir: /tmp
+
+# database
+db_name: ohdsi
+app_user: ohdsi_app_user
+app_user_password: app1
+admin_user: ohdsi_admin_user
+admin_user_password: admin1
+db_host: localhost
+db_port: 5432
+
+# tomcat
+tc_host_name: localhost
+tc_port: 8080
+
+# vm
+vm_user_name: vagrant
+
+# dataset
+dataset: synpuf1k
+ds_name: "SYNPUF 1k"

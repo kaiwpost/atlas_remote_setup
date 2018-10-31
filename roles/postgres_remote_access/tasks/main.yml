@@ -1,4 +1,8 @@
-# TODO for development only so can connect to db remotely
+---
+
+# role for development only
+# allows connecting to VM db using
+# from host
 - name: allow remote connections
   copy:
     src: "{{ role_path }}/files/pb_hba.conf"

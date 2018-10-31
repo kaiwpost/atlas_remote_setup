@@ -1,0 +1,12 @@
+---
+
+- name: restart tomcat
+  service: name=tomcat8 state=restarted
+
+- name: wait for tomcat to come back up
+  wait_for: port={{ tc_port }} delay=5
+
+- name: verify WebAPI is back up
+  uri: url=http://{{ tc_host_name }}:{{ tc_port }} return_content=true timeout=300
+  register: response
+  failed_when: "'It works !' not in response.content"

@@ -1,3 +1,5 @@
+---
+
 - name: add an apt key
   apt_key:
     keyserver: keyserver.ubuntu.com
@@ -19,47 +21,41 @@
     update_cache: true
   tags: packages
 
-- name: create results schema
-  command: psql ohdsi -c "CREATE SCHEMA IF NOT EXISTS results;"
-  become: true
-  become_user: postgres
-
-- name: change owner results schema
-  command: psql ohdsi -c "ALTER SCHEMA results OWNER TO ohdsi_admin;"
-  become: true
-  become_user: postgres
-
 - name: configure rJava
   command: R CMD javareconf
 
-# from https://adamj.eu/tech/2014/07/19/installing-and-removing-r-packages-with-ansible/
-# TODO move all of this into template
-# https://github.com/OHDSI/Achilles/wiki/Additional-instructions-for-Linux
-# https://github.com/Oefenweb/ansible-r/blob/master/templates/usr/local/bin/R-install-package.j2
-# http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/
+- name: install r - packages
+  copy:
+    src: "{{ role_path }}/files/install_packages.R"
+    dest: "{{ download_dir }}/install_packages.R"
+    mode: a+x
+
 - name: install r - packages
   command: >
-    Rscript --slave --no-save --no-restore-history -e "if (! ('{{ item }}' %in% installed.packages()[,'Package'])) { install.packages(pkgs='{{ item }}', repos=c('http://ftp.heanet.ie/mirrors/cran.r-project.org/')); print('Added'); } else { print('Already installed'); }"
+    ./install_packages.R {{ item.name }} {{ item.type }} --no-save --no-restore-history
   register: r_result
   failed_when: "r_result.rc != 0 or 'had non-zero exit status' in r_result.stderr"
   changed_when: "'Added' in r_result.stdout"
+  args:
+    chdir: "{{ download_dir }}"
   with_items:
-  - devtools
-
-- name: install r - devtools packages
-  command: >
-    Rscript --slave --no-save --no-restore-history -e "if (! ('{{ item }}' %in% installed.packages()[,'Package'])) { devtools::install_github(c('{{ item }}')); print('Added'); } else { print('Already installed'); }"
-  register: r_result
-  failed_when: "r_result.rc != 0 or 'had non-zero exit status' in r_result.stderr"
-  changed_when: "'Added' in r_result.stdout"
-  with_items:
-    - OHDSI/OhdsiRTools
-    - OHDSI/Achilles
+    - name: devtools
+      type: package
+    - name: OHDSI/OhdsiRTools
+      type: github
+    - name: OHDSI/Achilles
+      type: github
 
 - name: run achilles
-  script: "{{role_path}}/files/run_achilles.R"
+  template:
+     src: "{{role_path}}/files/run_achilles.j2"
+     dest: "{{download_dir}}/run_achilles.R"
+     mode: a+x
 
-- name: restart tomcat
-  service: name=tomcat8 state=restarted
-
-
+# TODO need to add a changed method so this doesn't always rerun
+- name: run achilles
+  command: "{{download_dir}}/run_achilles.R"
+  notify:
+    - restart tomcat
+    - wait for tomcat to come back up
+    - verify WebAPI is back up

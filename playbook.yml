@@ -1,4 +1,8 @@
 ---
+#TODO consolidate redundant tomcat handlers
+#TODO figure out how to create nested roles (e.g. download data, postgres, etc)
+#TODO simplify / cleanup directory structure in download / load data
+
 - name: Create Atlas stack
   hosts: all
   become: yes
@@ -9,10 +13,10 @@
     - vars/main.yml
 
   roles:
-  - createdb
+  - postgres
   - postgres_remote_access
   - webapi
   - atlas
-#  - load_synpuf5pct
-  - load_synpuf1k
+  - "download_{{ dataset }}"
+  - load_data
   - achilles

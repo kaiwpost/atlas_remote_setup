@@ -1,0 +1,14 @@
+#!/usr/bin/env Rscript
+
+library(Achilles)
+connectionDetails <- createConnectionDetails(dbms = "postgresql",
+                                             server = "{{ db_host }}/{{ db_name }}",
+                                             user = "{{ admin_user }}",
+                                             password = "{{ admin_user_password }}",
+                                             schema = "{{ dataset }}")
+achillesResults<-achilles(connectionDetails,
+                          cdmDatabaseSchema="{{ dataset }}",
+                          resultsDatabaseSchema="webapi",
+                          sourceName="{{ ds_name }}",
+                          cdmVersion="5",
+                          vocabDatabaseSchema="{{ dataset }}")
