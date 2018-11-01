@@ -4,6 +4,7 @@
 #TODO simplify / cleanup directory structure in download / load data
 #TODO maybe get the 1k from ftp://ftp.ohdsi.org/synpuf/ but slow
 #TODO so probably need to run that task in parallel to rest
+#TODO use inventory file
 - name: Create Atlas stack
   hosts: all
   become: yes
