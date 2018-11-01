@@ -3,7 +3,7 @@
 - name: install jdk, maven, tomcat
   apt:
     name:
-      - default-jdk
+      - openjdk-8-jdk
       - maven
       - tomcat8
     state: latest
@@ -22,15 +22,17 @@
     src: "{{ role_path }}/files/settings.j2"
     dest: "{{ download_dir }}/WebAPI/WebAPIConfig/settings.xml"
 
+- name: get jdk location
+  shell: "echo $(readlink -f /usr/bin/javac | sed 's:/bin/javac::')"
+  register: java_home
+
 - name: build WebAPI
   command: mvn clean package -s WebAPIConfig/settings.xml -P webapi-postgresql
   args:
     chdir: "{{ download_dir }}/WebAPI"
     creates: "{{ download_dir }}/WebAPI/target/WebAPI.war"
   environment:
-    # TODO set this dynamically instead of hard-coding
-    # export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:/bin/javac::")
-    JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    JAVA_HOME: "{{java_home.stdout}}"
 
 - name: copy sql templates
   template:

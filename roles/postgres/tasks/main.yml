@@ -17,7 +17,7 @@
 
 - name: add postgres repo
   apt_repository:
-    repo: deb https://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+    repo: deb https://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main
 
 - name: install PostgreSQL
   apt:

@@ -7,7 +7,7 @@
 
 - name: add CRAN
   apt_repository:
-    repo: deb https://cloud.r-project.org/bin/linux/ubuntu xenial/
+    repo: deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/
 
 - name: Install R, and requirements
   apt:
