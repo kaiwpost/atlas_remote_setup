@@ -1,4 +1,4 @@
-# OHDSI in a Box
+# Atlas dev setup
 
 ## Setup
 * [Install ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
