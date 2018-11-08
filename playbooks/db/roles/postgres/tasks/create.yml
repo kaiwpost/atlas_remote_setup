@@ -1,0 +1,180 @@
+---
+
+- name: ensure bash, openssl, and libssl are the latest versions
+  apt:
+    name:
+    - bash
+    - openssl
+    - libssl-dev
+    - libssl-doc
+    state: latest
+    update_cache: true
+  tags: packages
+
+- name: add an apt signing key
+  apt_key:
+    url: http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc
+
+- name: add postgres repo
+  apt_repository:
+    repo: deb https://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+
+- name: install PostgreSQL
+  apt:
+    name:
+    - postgresql-11
+    - postgresql-contrib-11
+    - libpq-dev
+    - python-psycopg2
+    state: latest
+    update_cache: true
+
+- name: ensure the PostgreSQL service is running
+  service: name=postgresql state=started enabled=yes
+
+- name: create users / groups
+  block:
+    - name: create ohdsi_admin role
+      postgresql_user:
+        name: ohdsi_admin
+        role_attr_flags: CREATEDB,REPLICATION
+
+    - name: create ohdsi_app role
+      postgresql_user:
+        name: ohdsi_app
+
+    - name: create {{ admin_user }}
+      postgresql_user:
+        name: "{{ admin_user }}"
+        password: "{{ admin_user_password }}"
+        encrypted: yes
+        expires: infinity
+
+
+    - name: create {{ app_user }}
+      postgresql_user:
+        name: "{{ app_user }}"
+        password: "{{ app_user_password }}"
+        encrypted: yes
+        expires: infinity
+  become: true
+  become_user: postgres
+
+- name: create db and assign user permissions
+  block:
+    - name: create db
+      postgresql_db:
+        name: "{{ db_name }}"
+
+    - name: assign {{ app_user }} to ohdsi_app group
+      postgresql_privs:
+        db: "{{ db_name }}"
+        roles: "{{ app_user }}"
+        objs: ohdsi_app
+        type: group
+
+    - name: assign {{ admin_user }} to ohdsi_admin group
+      postgresql_privs:
+        db: "{{ db_name }}"
+        roles: "{{ admin_user }}"
+        objs: ohdsi_admin
+        type: group
+
+    - name: grant ALL to ohdsi_admin
+      postgresql_privs:
+        db: "{{ db_name }}"
+        privs: ALL
+        type: database
+        role: ohdsi_admin
+
+    - name: grant ALL to ohdsi_admin
+      postgresql_privs:
+        db: "{{ db_name }}"
+        privs: CONNECT,TEMPORARY
+        type: database
+        role: ohdsi_app
+  become: true
+  become_user: postgres
+
+- name: create schema + assign privileges
+  block:
+    - name: create webapi schema
+      postgresql_schema:
+        name: webapi
+        database: "{{ db_name }}"
+        owner: ohdsi_admin
+
+    - name: grant ALL on {{db_name}}.webapi schema ohdsi_admin
+      postgresql_privs:
+        db: "{{ db_name }}"
+        privs: ALL
+        type: schema
+        objs: webapi
+        role: ohdsi_admin
+
+    - name: grant USAGE on {{db_name}}.webapi schema to PUBLIC
+      postgresql_privs:
+        db: "{{ db_name }}"
+        privs: USAGE
+        type: schema
+        objs: webapi
+        role: PUBLIC
+
+    - name: grant USAGE on {{db_name}}.webapi schema ohdsi_app
+      postgresql_privs:
+        db: "{{ db_name }}"
+        privs: USAGE
+        type: schema
+        objs: webapi
+        role: ohdsi_app
+  become: true
+  become_user: postgres
+
+# to simplify db login below (peer authentication)
+- name: create ohdsi_admin_user
+  user:
+    name: "{{ admin_user }}"
+
+- name: alter default privileges
+  block:
+    - name: "alter webapi TABLES default privs for ohdsi_app: INSERT,SELECT,UPDATE,DELETE,REFERENCES,TRIGGER"
+      postgresql_privs:
+        db: "{{ db_name }}"
+        login: "{{ admin_user }}"
+        objs: TABLES
+        privs: INSERT,SELECT,UPDATE,DELETE,REFERENCES,TRIGGER
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+
+    - name: "alter webapi SEQUENCES default privs for ohdsi_app: SELECT,USAGE"
+      postgresql_privs:
+        db: "{{ db_name }}"
+        login: "{{ admin_user }}"
+        objs: SEQUENCES
+        privs: SELECT,USAGE
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+
+    - name: "alter webapi FUNCTIONS default privs for ohdsi_app: EXECUTE"
+      postgresql_privs:
+        db: "{{ db_name}}"
+        login: "{{ admin_user}}"
+        objs: FUNCTIONS
+        privs: EXECUTE
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+
+    - name: "alter webapi TYPES default privs for ohdsi_app: USAGE"
+      postgresql_privs:
+        db: "{{ db_name}}"
+        login: "{{ admin_user}}"
+        objs: TYPES
+        privs: USAGE
+        type: default_privs
+        schema: webapi
+        role: ohdsi_app
+  become: true
+  become_user: ohdsi_admin_user

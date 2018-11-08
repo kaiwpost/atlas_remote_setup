@@ -1,0 +1,10 @@
+---
+
+#TODO simplify / cleanup directory structure in download / load data
+#TODO make load_data idempotent
+#TODO add vagrant shared directory over various git projects so that can edit locally
+#TODO add travis https://www.jeffgeerling.com/blog/testing-ansible-roles-travis-ci-github
+- import_playbook: playbooks/db/main.yml
+- import_playbook: playbooks/www/main.yml
+- import_playbook: playbooks/data/main.yml
+

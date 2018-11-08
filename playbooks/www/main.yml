@@ -1,0 +1,8 @@
+---
+
+- hosts: www
+  become: yes
+
+  roles:
+    - webapi
+    - atlas

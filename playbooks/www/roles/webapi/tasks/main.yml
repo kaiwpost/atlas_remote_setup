@@ -1,0 +1,70 @@
+---
+
+- name: install jdk, maven, tomcat
+  apt:
+    name:
+      - openjdk-8-jdk
+      - maven
+      - tomcat8
+    state: latest
+    update_cache: true
+
+- name: clone ohdsi webapi
+  git:
+    repo: https://github.com/OHDSI/WebAPI.git
+    dest: "{{ download_dir }}/WebAPI"
+    version: v2.6.0
+
+- name: Ensures {{download_dir}}/WebAPI/WebAPIConfig dir exists
+  file: path={{download_dir}}/WebAPI/WebAPIConfig state=directory
+
+- name: copy settings.j2 file to remote server
+  template:
+    src: "{{ role_path }}/files/settings.j2"
+    dest: "{{ download_dir }}/WebAPI/WebAPIConfig/settings.xml"
+
+# echo $(readlink -f /usr/bin/javac | sed 's:/bin/javac::')
+- name: set JAVA_HOME
+  lineinfile:
+    path: /etc/environment
+    regexp: '^JAVA_HOME='
+    line: 'JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64'
+
+- name: build WebAPI
+  command: mvn clean package -s WebAPIConfig/settings.xml -P webapi-postgresql
+  args:
+    chdir: "{{ download_dir }}/WebAPI"
+    creates: "{{ download_dir }}/WebAPI/target/WebAPI.war"
+
+- name: deploy WAR
+  command: "cp {{ download_dir }}/WebAPI/target/WebAPI.war /var/lib/tomcat8/webapps/"
+  args:
+    creates: "/var/lib/tomcat8/webapps/WebAPI.war"
+  register: result
+  notify:
+    - restart tomcat
+
+- name: force run of notified handlers, since WAR deploy requires restart to create webapi schema
+  meta: flush_handlers
+
+- name: copy helper script
+  copy:
+    src: "{{ role_path }}/files/count_rows.sh"
+    dest: "{{ download_dir }}/count_rows.sh"
+    mode: "a+x"
+
+- name: copy sql templates
+  template:
+    src: "{{ role_path }}/files/webapi_link.j2"
+    dest: "{{ download_dir }}/webapi_link.sql"
+
+- name: link webapi.source and webapi.source_daimon and confirm configuration is correct
+  shell: "psql -tAX ohdsi -f {{ download_dir }}/webapi_link.sql | {{download_dir}}/count_rows.sh"
+  become: true
+  become_user: postgres
+  register: rows_inserted
+  changed_when: rows_inserted.stdout != "0"
+  notify:
+      - restart tomcat
+      - verify WebAPI
+

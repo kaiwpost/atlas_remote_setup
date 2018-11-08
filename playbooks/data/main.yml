@@ -1,0 +1,9 @@
+---
+- hosts: data
+  become: yes
+
+  roles:
+    - download_data
+    - load_data
+    - achilles
+

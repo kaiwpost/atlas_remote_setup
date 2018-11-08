@@ -1,0 +1,23 @@
+---
+
+# TODO figure out how to share handler from www/roles/webapi with this role
+# TODO and remove duplication
+- name: restart tomcat
+  service: name=tomcat8 state=restarted
+  listen: "restart tomcat"
+
+- name: wait for tomcat to come back up
+  wait_for: port={{  www_port }} delay=5
+  listen: "restart tomcat"
+
+- name: verify WebAPI is back up
+  uri: url=http://{{ hostvars[groups['www'][0]].inventory_hostname }}:{{ www_port }} return_content=true timeout=300
+  register: response
+  failed_when: "'It works !' not in response.content"
+  listen: "restart tomcat"
+
+- name: verify sources
+  uri: url=http://{{ hostvars[groups['www'][0]].inventory_hostname }}:{{ www_port }}/WebAPI/source/sources return_content=true timeout=300
+  register: response
+  failed_when: "'sourceId' not in response.content"
+  listen: "verify WebAPI"

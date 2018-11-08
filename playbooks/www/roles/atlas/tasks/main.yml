@@ -1,0 +1,30 @@
+---
+- name: install packages
+  apt:
+    name:
+    - zip
+    - unzip
+    state: latest
+    update_cache: true
+
+- name: Download latest atlas release
+  unarchive:
+    src: https://github.com/OHDSI/Atlas/archive/released.zip
+    dest: "{{ download_dir }}"
+    remote_src: yes
+
+- name: deploy app
+  synchronize:
+    src: "{{ download_dir }}/Atlas-released/"
+    dest: /var/lib/tomcat8/webapps/atlas/
+    checksum: yes
+    times: no
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: copy local config
+  template:
+    src: "{{ role_path }}/files/config-local.j2"
+    dest: /var/lib/tomcat8/webapps/atlas/js/config-local.js
+  notify:
+    - restart tomcat
+    - verify WebAPI

@@ -1,0 +1,60 @@
+---
+- name: add an apt key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: E298A3A825C0D65DFD57CBB651716619E084DAB9
+
+- name: add CRAN
+  apt_repository:
+    repo: deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/
+
+- name: Install R, and requirements
+  apt:
+    name:
+      - r-base-dev
+      - libcurl4-openssl-dev
+      - libssl-dev
+      - libxml2-dev
+      - openjdk-8-jdk
+    state: latest
+    update_cache: true
+  tags: packages
+
+- name: configure rJava
+  command: R CMD javareconf
+
+- name: install r - packages
+  copy:
+    src: "{{ role_path }}/files/install_packages.R"
+    dest: "{{ download_dir }}/install_packages.R"
+    mode: a+x
+
+- name: install r - packages
+  command: >
+    ./install_packages.R {{ item.name }} {{ item.type }} --no-save --no-restore-history
+  register: r_result
+  failed_when: "r_result.rc != 0 or 'had non-zero exit status' in r_result.stderr"
+  changed_when: "'Added' in r_result.stdout"
+  args:
+    chdir: "{{ download_dir }}"
+  with_items:
+    - name: devtools
+      type: package
+    - name: OHDSI/OhdsiRTools
+      type: github
+    - name: OHDSI/Achilles
+      type: github
+
+- name: copy run_achilles.j2 to server
+  template:
+     src: "{{role_path}}/files/run_achilles.j2"
+     dest: "{{download_dir}}/run_achilles.R"
+     mode: a+x
+
+- name: run achilles
+  shell: "{{download_dir}}/run_achilles.R > achilles.log"
+  args:
+    creates: "{{ download_dir}}/achilles.log"
+  notify:
+    - restart tomcat
+    - verify WebAPI

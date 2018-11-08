@@ -1,0 +1,6 @@
+---
+  - include_role:
+      name: download_data/roles/download_{{ dataset }}
+
+  - include_role:
+      name: load_data
