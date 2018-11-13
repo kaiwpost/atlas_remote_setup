@@ -54,7 +54,7 @@
      mode: a+x
 
 - name: run achilles
-  shell: "{{ data_download_dir }}/run_achilles.R > achilles.log"
+  command: "{{ data_download_dir }}/run_achilles.R"
   args:
     creates: "{{ data_download_dir }}/output/log_achilles.txt"
   notify:

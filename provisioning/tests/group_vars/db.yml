@@ -1,0 +1,9 @@
+---
+
+db_name: ohdsi
+db_port: 5432
+db_postgres_user_password: postgres
+db_app_user: ohdsi_app_user
+db_app_user_password: app1
+db_admin_user: ohdsi_admin_user
+db_admin_user_password: admin1

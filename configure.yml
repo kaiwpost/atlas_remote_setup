@@ -1,7 +1,6 @@
 ---
 
 #TODO simplify / cleanup directory structure in download / load data
-#TODO add travis https://www.jeffgeerling.com/blog/testing-ansible-roles-travis-ci-github
 - import_playbook: playbooks/db/main.yml
 - import_playbook: playbooks/www/main.yml
 - import_playbook: playbooks/data/main.yml
