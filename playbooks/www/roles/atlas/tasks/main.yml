@@ -11,6 +11,7 @@
   unarchive:
     src: https://github.com/OHDSI/Atlas/archive/released.zip
     dest: "{{ www_download_dir }}"
+    creates: "{{ www_download_dir }}/Atlas-released"
     remote_src: yes
 
 - name: deploy app

@@ -21,7 +21,9 @@
   tags: packages
 
 - name: configure rJava
-  command: R CMD javareconf
+  shell: R CMD javareconf > "{{data_download_dir}}/rJava.log"
+  args:
+    creates: "{{data_download_dir}}/rJava.log"
 
 - name: install r - packages
   copy:
@@ -54,7 +56,7 @@
 - name: run achilles
   shell: "{{ data_download_dir }}/run_achilles.R > achilles.log"
   args:
-    creates: "{{ data_download_dir }}/achilles.log"
+    creates: "{{ data_download_dir }}/output/log_achilles.txt"
   notify:
     - restart tomcat
     - verify WebAPI
