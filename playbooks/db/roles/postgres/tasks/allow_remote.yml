@@ -14,7 +14,7 @@
 - name: change postgres password
   postgresql_user:
     name: postgres
-    password: "{{ postgres_user_password }}"
+    password: "{{ db_postgres_user_password }}"
   become: yes
   become_user: postgres
 

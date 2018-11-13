@@ -6,14 +6,14 @@
     <properties>
       <datasource.driverClassName>org.postgresql.Driver</datasource.driverClassName>
       <datasource.url>jdbc:postgresql://{{ db_vars.inventory_hostname }}:{{ db_port }}/{{db_name}}</datasource.url>
-      <datasource.username>{{ app_user }}</datasource.username>
-      <datasource.password>{{ app_user_password }}</datasource.password>
+      <datasource.username>{{ db_app_user }}</datasource.username>
+      <datasource.password>{{ db_app_user_password }}</datasource.password>
       <datasource.dialect>postgresql</datasource.dialect>
       <datasource.ohdsi.schema>webapi</datasource.ohdsi.schema>
       <flyway.datasource.driverClassName>${datasource.driverClassName}</flyway.datasource.driverClassName>
       <flyway.datasource.url>${datasource.url}</flyway.datasource.url>
-      <flyway.datasource.username>{{ admin_user }}</flyway.datasource.username>
-      <flyway.datasource.password>{{ admin_user_password }}</flyway.datasource.password>
+      <flyway.datasource.username>{{ db_admin_user }}</flyway.datasource.username>
+      <flyway.datasource.password>{{ db_admin_user_password }}</flyway.datasource.password>
       <flyway.locations>classpath:db/migration/postgresql</flyway.locations>
       <security.enabled>false</security.enabled>
       <security.token.expiration>43200</security.token.expiration>

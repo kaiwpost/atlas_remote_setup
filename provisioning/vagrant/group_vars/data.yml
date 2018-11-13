@@ -1,6 +1,6 @@
 ---
 
-download_dir: /tmp
+data_download_dir: /vagrant/data
 
-dataset: synpuf1k
-ds_name: "SYNPUF 1k"
+data_dataset: synpuf1k
+data_dataset_name: "SYNPUF 1k"

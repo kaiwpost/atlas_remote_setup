@@ -1,4 +1,4 @@
 ---
 
-download_dir: /tmp
+www_download_dir: /vagrant/www
 www_port: 8080

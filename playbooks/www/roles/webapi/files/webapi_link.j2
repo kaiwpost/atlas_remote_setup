@@ -4,8 +4,8 @@ WITH data(source_id,
        source_key,
        source_connection,
        source_dialect) AS (VALUES
-    (1, 'My Cdm', 'MY_CDM', 'jdbc:postgresql://{{ db_host }}:{{ db_port }}/{{ db_name }}?user={{app_user}}>&password={{app_user_password}}', 'postgresql'),
-    (2, 'Default vocabulary', 'vocab', 'jdbc:postgresql://{{ db_host }}:{{ db_port }}/{{ db_name }}?user={{ app_user }}>&password={{ app_user_password }}', 'postgresql'))
+    (1, 'My Cdm', 'MY_CDM', 'jdbc:postgresql://{{ db_host }}:{{ db_port }}/{{ db_name }}?user={{ db_app_user }}>&password={{ db_app_user_password }}', 'postgresql'),
+    (2, 'Default vocabulary', 'vocab', 'jdbc:postgresql://{{ db_host }}:{{ db_port }}/{{ db_name }}?user={{ db_app_user }}>&password={{ db_app_user_password }}', 'postgresql'))
 INSERT INTO webapi.source (source_id, source_name, source_key, source_connection, source_dialect)
 SELECT source_id, source_name, source_key, source_connection, source_dialect
 FROM data d

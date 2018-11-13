@@ -2,85 +2,77 @@
 
 - name: create sql dir
   file:
-    dest: "{{ download_dir }}/ohdsi/sql"
+    dest: "{{ data_download_dir }}/ohdsi/sql"
     state: directory
 
 - name: create link_data.sql on remote
   template: src={{item.src}} dest={{item.dest}}
   with_items:
-    - src: "{{ role_path }}/files/link_data.j2"
-      dest: "{{ download_dir }}/ohdsi/sql/link_data.sql"
+  - src: "{{ role_path }}/files/link_data.j2"
+    dest: "{{ data_download_dir }}/ohdsi/sql/link_data.sql"
 
-- name: "find all datafiles in {{ download_dir }}/{{ dataset }}"
+- name: "find all datafiles in {{ data_download_dir }}/{{ data_dataset }}"
   find:
-    paths: "{{ download_dir }}/{{ dataset }}"
+    paths: "{{ data_download_dir }}/{{ data_dataset }}"
     patterns: "*.csv"
   register: data
 
 - name: build sql COPY commands based on files in data dir
   template:
     src: "{{ role_path }}/files/load_data.j2"
-    dest: "{{ download_dir }}/ohdsi/sql/load_data.sql"
+    dest: "{{ data_download_dir }}/ohdsi/sql/load_data.sql"
 
 - name: clone cdm repo
   git:
     repo: https://github.com/OHDSI/CommonDataModel.git
-    dest: "{{ download_dir }}/ohdsi/common_data_model"
+    dest: "{{ data_download_dir }}/ohdsi/common_data_model"
     version: v5.2.2
 
 - name: find files sql files in cdm repo
   find:
-    paths: "{{ download_dir }}/ohdsi/common_data_model/PostgreSQL/"
+    paths: "{{ data_download_dir }}/ohdsi/common_data_model/PostgreSQL/"
     patterns: "*.sql"
     recurse: yes
   register: files_matched_subdirectory
 
-- name: copy cdm sql to shared repo
+- name: copy cdm sql to common sql dir
   copy:
     src: "{{ item.path }}"
-    dest: "{{ download_dir }}/ohdsi/sql/"
+    dest: "{{ data_download_dir }}/ohdsi/sql/"
     remote_src: yes
   with_items:
-    - "{{ files_matched_subdirectory.files }}"
+  - "{{ files_matched_subdirectory.files }}"
 
-
-## TODO these are not idempotent right now. rerunning causes issues
-- name: create synpuf schema
-  command: psql ohdsi -c "CREATE SCHEMA IF NOT EXISTS {{ dataset }};"
+- name: create {{ data_dataset }} schema
+  postgresql_schema:
+    name: "{{ data_dataset }}"
+    database: ohdsi
   become: true
   become_user: postgres
 
-- name: OMOP DDL
-  command: psql ohdsi -f "{{download_dir}}/ohdsi/sql/OMOP CDM ddl - PostgreSQL.sql"
-  become: true
-  become_user: postgres
-  environment:
-    PGOPTIONS: --search_path={{ dataset }}
-
+## sql commands are not idempotent. Rerunning causes issues
+## getting around this by creating a log file after sql runs,
+## so manually have to remove that file if want to rerun.
 - name: load data
-  command: psql ohdsi -f "{{download_dir}}/ohdsi/sql/load_data.sql"
+  shell: psql ohdsi -f "{{ item }}"
   become: true
   become_user: postgres
+  args:
+    chdir: "{{data_download_dir}}/ohdsi/sql"
+    creates: "{{ data_dataset }}_load_run.log"
+  with_items:
+  - OMOP CDM ddl - PostgreSQL.sql
+  - load_data.sql
+  - OMOP CDM constraints - PostgreSQL.sql
+  - OMOP CDM indexes required - PostgreSQL.sql
+  - link_data.sql
+  register: result
   environment:
-    PGOPTIONS: --search_path={{ dataset }}
+    PGOPTIONS: --search_path={{ data_dataset }}
 
-- name: OMOP CDM constraints
-  command: psql ohdsi -f "{{download_dir}}/ohdsi/sql/OMOP CDM constraints - PostgreSQL.sql"
-  become: true
-  become_user: postgres
-  environment:
-    PGOPTIONS: --search_path={{ dataset }}
+- name: "create {{ data_dataset }}_load_run.txt"
+  copy:
+    content: "{{ result }}"
+    dest: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_load_run.log"
+    force: no
 
-- name: OMOP CDM indexes
-  command: psql ohdsi -f "{{download_dir}}/ohdsi/sql/OMOP CDM indexes required - PostgreSQL.sql"
-  become: true
-  become_user: postgres
-  environment:
-    PGOPTIONS: --search_path={{ dataset }}
-
-- name: Link tables to data
-  command: psql ohdsi -f "{{download_dir}}/ohdsi/sql/link_data.sql"
-  become: true
-  become_user: postgres
-  environment:
-    PGOPTIONS: --search_path={{ dataset }}

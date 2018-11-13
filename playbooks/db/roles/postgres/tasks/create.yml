@@ -43,18 +43,18 @@
       postgresql_user:
         name: ohdsi_app
 
-    - name: create {{ admin_user }}
+    - name: create {{ db_admin_user }}
       postgresql_user:
-        name: "{{ admin_user }}"
-        password: "{{ admin_user_password }}"
+        name: "{{ db_admin_user }}"
+        password: "{{ db_admin_user_password }}"
         encrypted: yes
         expires: infinity
 
 
-    - name: create {{ app_user }}
+    - name: create {{ db_app_user }}
       postgresql_user:
-        name: "{{ app_user }}"
-        password: "{{ app_user_password }}"
+        name: "{{ db_app_user }}"
+        password: "{{ db_app_user_password }}"
         encrypted: yes
         expires: infinity
   become: true
@@ -66,17 +66,17 @@
       postgresql_db:
         name: "{{ db_name }}"
 
-    - name: assign {{ app_user }} to ohdsi_app group
+    - name: assign {{ db_app_user }} to ohdsi_app group
       postgresql_privs:
         db: "{{ db_name }}"
-        roles: "{{ app_user }}"
+        roles: "{{ db_app_user }}"
         objs: ohdsi_app
         type: group
 
-    - name: assign {{ admin_user }} to ohdsi_admin group
+    - name: assign {{ db_admin_user }} to ohdsi_admin group
       postgresql_privs:
         db: "{{ db_name }}"
-        roles: "{{ admin_user }}"
+        roles: "{{ db_admin_user }}"
         objs: ohdsi_admin
         type: group
 
@@ -133,14 +133,14 @@
 # to simplify db login below (peer authentication)
 - name: create ohdsi_admin_user
   user:
-    name: "{{ admin_user }}"
+    name: "{{ db_admin_user }}"
 
 - name: alter default privileges
   block:
     - name: "alter webapi TABLES default privs for ohdsi_app: INSERT,SELECT,UPDATE,DELETE,REFERENCES,TRIGGER"
       postgresql_privs:
         db: "{{ db_name }}"
-        login: "{{ admin_user }}"
+        login: "{{ db_admin_user }}"
         objs: TABLES
         privs: INSERT,SELECT,UPDATE,DELETE,REFERENCES,TRIGGER
         type: default_privs
@@ -150,7 +150,7 @@
     - name: "alter webapi SEQUENCES default privs for ohdsi_app: SELECT,USAGE"
       postgresql_privs:
         db: "{{ db_name }}"
-        login: "{{ admin_user }}"
+        login: "{{ db_admin_user }}"
         objs: SEQUENCES
         privs: SELECT,USAGE
         type: default_privs
@@ -159,8 +159,8 @@
 
     - name: "alter webapi FUNCTIONS default privs for ohdsi_app: EXECUTE"
       postgresql_privs:
-        db: "{{ db_name}}"
-        login: "{{ admin_user}}"
+        db: "{{ db_name }}"
+        login: "{{ db_admin_user }}"
         objs: FUNCTIONS
         privs: EXECUTE
         type: default_privs
@@ -170,7 +170,7 @@
     - name: "alter webapi TYPES default privs for ohdsi_app: USAGE"
       postgresql_privs:
         db: "{{ db_name}}"
-        login: "{{ admin_user}}"
+        login: "{{ db_admin_user }}"
         objs: TYPES
         privs: USAGE
         type: default_privs

@@ -26,7 +26,7 @@
 - name: install r - packages
   copy:
     src: "{{ role_path }}/files/install_packages.R"
-    dest: "{{ download_dir }}/install_packages.R"
+    dest: "{{ data_download_dir }}/install_packages.R"
     mode: a+x
 
 - name: install r - packages
@@ -36,7 +36,7 @@
   failed_when: "r_result.rc != 0 or 'had non-zero exit status' in r_result.stderr"
   changed_when: "'Added' in r_result.stdout"
   args:
-    chdir: "{{ download_dir }}"
+    chdir: "{{ data_download_dir }}"
   with_items:
     - name: devtools
       type: package
@@ -47,14 +47,14 @@
 
 - name: copy run_achilles.j2 to server
   template:
-     src: "{{role_path}}/files/run_achilles.j2"
-     dest: "{{download_dir}}/run_achilles.R"
+     src: "{{ role_path }}/files/run_achilles.j2"
+     dest: "{{ data_download_dir }}/run_achilles.R"
      mode: a+x
 
 - name: run achilles
-  shell: "{{download_dir}}/run_achilles.R > achilles.log"
+  shell: "{{ data_download_dir }}/run_achilles.R > achilles.log"
   args:
-    creates: "{{ download_dir}}/achilles.log"
+    creates: "{{ data_download_dir }}/achilles.log"
   notify:
     - restart tomcat
     - verify WebAPI

@@ -4,12 +4,12 @@
 library(Achilles)
 connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              server = "{{ db_host }}/{{ db_name }}",
-                                             user = "{{ admin_user }}",
-                                             password = "{{ admin_user_password }}",
-                                             schema = "{{ dataset }}")
+                                             user = "{{ db_admin_user }}",
+                                             password = "{{ db_admin_user_password }}",
+                                             schema = "{{ data_dataset }}")
 achillesResults<-achilles(connectionDetails,
-                          cdmDatabaseSchema="{{ dataset }}",
+                          cdmDatabaseSchema="{{ data_dataset }}",
                           resultsDatabaseSchema="webapi",
-                          sourceName="{{ ds_name }}",
+                          sourceName="{{ data_dataset_name }}",
                           cdmVersion="5",
-                          vocabDatabaseSchema="{{ dataset }}")
+                          vocabDatabaseSchema="{{ data_dataset }}")

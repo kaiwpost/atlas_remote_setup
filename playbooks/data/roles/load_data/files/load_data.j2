@@ -1,5 +1,5 @@
--- Build dynamically using contents of {{ download_dir }}/{{dataset}}
+-- Build dynamically using contents of {{ data_download_dir }}/{{ data_dataset }}
 {% for file in data.files %}
 {% set file_name = file.path | basename -%}
-COPY {{ file_name.split('.')[0] | upper }} FROM '{{ download_dir }}/{{dataset}}/{{ file_name }}' DELIMITER E'\t' CSV ENCODING 'UTF8';
+COPY {{ file_name.split('.')[0] | upper }} FROM '{{ data_download_dir }}/{{ data_dataset }}/{{ file_name }}' DELIMITER E'\t' CSV ENCODING 'UTF8';
 {% endfor %}

@@ -10,12 +10,12 @@
 - name: Download latest atlas release
   unarchive:
     src: https://github.com/OHDSI/Atlas/archive/released.zip
-    dest: "{{ download_dir }}"
+    dest: "{{ www_download_dir }}"
     remote_src: yes
 
 - name: deploy app
   synchronize:
-    src: "{{ download_dir }}/Atlas-released/"
+    src: "{{ www_download_dir }}/Atlas-released/"
     dest: /var/lib/tomcat8/webapps/atlas/
     checksum: yes
     times: no
