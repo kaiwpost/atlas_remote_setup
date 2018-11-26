@@ -1,0 +1,46 @@
+---
+
+- name: install packages
+  apt:
+    name:
+    - zip
+    - unzip
+    state: latest
+    update_cache: true
+
+- name: check vocabulary files exist
+  local_action:
+    module: stat
+    path: "{{ role_path }}/files/CONCEPT.csv"
+  register: concept
+  become: no
+
+- name: check vocabulary files exist
+  fail:
+    msg: "vocabulary files missing. See {{ role_path }}/README.md for details on how to obtain the vocabulary"
+  when: concept.stat.exists == False
+
+- name: ensure CONCEPT.csv contains CPT4 codes
+  local_action: command grep "^2521998" {{role_path}}/files/CONCEPT.csv
+  register: cpt4
+  check_mode: no
+  ignore_errors: yes
+  changed_when: false
+  become: no
+
+- name: ensure CONCEPT.csv contains CPT4 codes
+  fail:
+    msg: "CPT4 codes missing. Need to run cpt4.jar. See {{ role_path }}/files/readme.txt for details"
+  when: cpt4 is failed
+
+- name: create vocabulary dir
+  file:
+    dest: "{{ data_download_dir }}/vocabulary/"
+    state: directory
+
+- name: copy vocabulary files to remote
+  copy:
+    src: "{{ item }}"
+    dest: "{{ data_download_dir }}/vocabulary/"
+  with_fileglob:
+    -  "{{ role_path }}/files/*.csv"

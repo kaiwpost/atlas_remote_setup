@@ -16,13 +16,13 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "ansible" do |ansible|
      ansible.limit = "all"
-     ansible.verbose  = true
+     #ansible.verbose  = true
      ansible.playbook = "configure.yml"
      ansible.inventory_path = "provisioning/vagrant/inventory"
      ansible.extra_vars = {
         ansible_ssh_user: 'vagrant',
-        ansible_ssh_private_key_file: "~/.vagrant.d/insecure_private_key",
-        ansible_ssh_host: "192.168.33.10",
-        ansible_ssh_port: "22"}
+        ansible_ssh_private_key_file: ".vagrant/machines/www/virtualbox/private_key",
+        ansible_ssh_host: "127.0.0.1",
+        ansible_ssh_port: "2222"}
   end
 end
