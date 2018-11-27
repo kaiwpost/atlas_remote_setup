@@ -17,10 +17,19 @@
     patterns: "*.csv"
   register: data
 
-- name: build sql COPY commands based on files in data dir
+- name: "find all vocabulary files in {{ data_download_dir }}/vocabulary"
+  find:
+    paths: "{{ data_download_dir }}/vocabulary"
+    patterns: "*.csv"
+  register: vocabulary
+
+- name: build sql COPY commands based on files in data and vocab dirs
   template:
-    src: "{{ role_path }}/files/load_data.j2"
-    dest: "{{ data_download_dir }}/ohdsi/sql/load_data.sql"
+    src: "{{ role_path }}/files/load.j2"
+    dest: "{{ data_download_dir }}/ohdsi/sql/load_{{ item.name }}.sql"
+  with_items:
+  - { name: data, files: "{{ data.files }}", directory: "{{ data_download_dir }}/{{ data_dataset }}", arguments: DELIMITER E'\t' CSV ENCODING 'UTF8'}
+  - { name: vocabulary, files: "{{ vocabulary.files }}", directory: "{{ data_download_dir }}/vocabulary", arguments: DELIMITER E'\t' CSV HEADER QUOTE E'\b'}
 
 - name: clone cdm repo
   git:
@@ -63,6 +72,7 @@
   with_items:
   - OMOP CDM ddl - PostgreSQL.sql
   - load_data.sql
+  - load_vocabulary.sql
   - OMOP CDM constraints - PostgreSQL.sql
   - OMOP CDM indexes required - PostgreSQL.sql
   - link_data.sql

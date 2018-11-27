@@ -135,6 +135,7 @@
   user:
     name: "{{ db_admin_user }}"
 
+# TODO these ALTER privs always show as changed. Investigate / file bug when get a chance.
 - name: alter default privileges
   block:
     - name: "alter webapi TABLES default privs for ohdsi_app: INSERT,SELECT,UPDATE,DELETE,REFERENCES,TRIGGER"
@@ -146,6 +147,7 @@
         type: default_privs
         schema: webapi
         role: ohdsi_app
+      changed_when: false
 
     - name: "alter webapi SEQUENCES default privs for ohdsi_app: SELECT,USAGE"
       postgresql_privs:
@@ -156,6 +158,7 @@
         type: default_privs
         schema: webapi
         role: ohdsi_app
+      changed_when: false
 
     - name: "alter webapi FUNCTIONS default privs for ohdsi_app: EXECUTE"
       postgresql_privs:
@@ -166,6 +169,7 @@
         type: default_privs
         schema: webapi
         role: ohdsi_app
+      changed_when: false
 
     - name: "alter webapi TYPES default privs for ohdsi_app: USAGE"
       postgresql_privs:
