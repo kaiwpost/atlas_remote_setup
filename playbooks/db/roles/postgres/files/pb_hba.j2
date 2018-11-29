@@ -1,3 +1,4 @@
+{% set db_host = hostvars[groups['db'][0]].inventory_hostname %}
 # PostgreSQL Client Authentication Configuration File
 # ===================================================
 #
@@ -90,7 +91,8 @@ local   all             postgres                                peer
 local   all             all                                     peer
 # IPv4 local connections:
 host    all             all             127.0.0.1/32            md5
-host    all             all             192.168.33.10/24        md5
+# TODO update to use template so can dynamically create this file
+host    all             all             {{ db_host }}/24        md5
 # IPv6 local connections:
 host    all             all             ::1/128                 md5
 # Allow replication connections from localhost, by a user with the

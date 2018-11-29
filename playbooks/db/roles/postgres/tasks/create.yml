@@ -25,7 +25,7 @@
     - postgresql-11
     - postgresql-contrib-11
     - libpq-dev
-    - python-psycopg2
+    - python3-psycopg2
     state: latest
     update_cache: true
 
