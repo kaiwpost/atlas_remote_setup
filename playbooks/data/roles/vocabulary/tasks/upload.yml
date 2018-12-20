@@ -17,7 +17,7 @@
 
 - name: check vocabulary files exist
   fail:
-    msg: "vocabulary files missing. See {{ role_path }}/README.md for details on how to obtain the vocabulary"
+    msg: "vocabulary files missing. See {{ role_path }}/files/README.md for details on how to obtain the vocabulary"
   when: concept.stat.exists == False
 
 - name: ensure CONCEPT.csv contains CPT4 codes
