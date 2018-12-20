@@ -1,0 +1,22 @@
+---
+
+- name: create link_data.sql on remote
+  template:
+    src: "{{ role_path }}/files/link_data.j2"
+    dest: "{{ data_download_dir }}/ohdsi/sql/{{ data_dataset }}_link_data.sql"
+  with_items:
+  - { source_id: "{{ source_id or 1}}" }
+  when: data_dataset != 'vocabulary'
+
+- name: "find all datafiles in {{ data_download_dir }}/{{ data_dataset }}"
+  find:
+    paths: "{{ data_download_dir }}/{{ data_dataset }}"
+    patterns: "*.csv"
+  register: data
+
+- name: build sql COPY commands based on files in data and vocab dirs
+  template:
+    src: "{{ role_path }}/files/load.j2"
+    dest: "{{ data_download_dir }}/ohdsi/sql/{{ item.name }}_load.sql"
+  with_items:
+  - { name: "{{ data_dataset }}", files: "{{ data.files }}", directory: "{{ data_download_dir }}/{{ data_dataset }}", arguments: "{{ delimiter }}" }

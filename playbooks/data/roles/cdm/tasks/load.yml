@@ -1,0 +1,80 @@
+---
+
+## sql commands are not idempotent. Rerunning causes issues
+## getting around this by creating a log file after sql runs,
+## so manually have to remove that file if want to rerun.
+- name: load data into schema
+  block:
+  - name: create "{{ schema }}" schema
+    postgresql_schema:
+      name: "{{ schema }}"
+      database: "{{ db_name }}"
+      owner: ohdsi_admin
+    become: true
+    become_user: postgres
+
+  - name: load data
+    shell: "PGOPTIONS='--search_path={{ data_dataset }}' psql -d ohdsi -f '{{ item }}'"
+    become: true
+    become_user: postgres
+    args:
+      chdir: "{{data_download_dir}}/ohdsi/sql"
+      creates: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_load.log"
+    with_items:
+    - OMOP CDM ddl - PostgreSQL.sql
+    - "{{ data_dataset }}_load.sql"
+    - OMOP CDM constraints - PostgreSQL.sql
+    - OMOP CDM indexes required - PostgreSQL.sql
+    register: result
+
+  - name: "create {{ data_dataset }}_load_run.txt"
+    copy:
+      content: "{{ result }}"
+      dest: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_load.log"
+      force: no
+
+  - name: "grant permissions on {{ data_dataset }} schema"
+    include_role:
+      name: cdm
+      tasks_from: grant_permissions
+    vars:
+      schema: "{{ data_dataset }}"
+
+- name: create separate results schema
+  block:
+  - name: create "{{ schema }}_results" schema
+    postgresql_schema:
+      name: "{{ schema }}_results"
+      database: "{{ db_name }}"
+      owner: ohdsi_admin
+    become: true
+    become_user: postgres
+
+  - name: create "{{ schema }}_results" schema
+    shell: "PGOPTIONS='--search_path={{ data_dataset }}_results' psql -d ohdsi -f '{{ item }}'"
+    become: true
+    become_user: postgres
+    args:
+      chdir: "{{data_download_dir}}/ohdsi/sql"
+      creates: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_results.log"
+    with_items:
+    - OMOP CDM ddl - PostgreSQL.sql
+    #Not required until CDM v6.0
+    #  - OMOP CDM Results postgresql ddl.txt
+    - OMOP CDM constraints - PostgreSQL.sql
+    - OMOP CDM indexes required - PostgreSQL.sql
+    register: results
+
+  - name: "create {{data_dataset}}_results.log"
+    copy:
+      content: "{{ results }}"
+      dest: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_results.log"
+      force: no
+
+  - name: "grant permissions on {{ data_dataset }}_results schema"
+    include_role:
+      name: cdm
+      tasks_from: grant_permissions
+    vars:
+      schema: "{{ data_dataset }}_results"
+  when: results_schema

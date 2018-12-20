@@ -1,0 +1,47 @@
+---
+
+- name: clone cdm repo
+  git:
+    repo: https://github.com/OHDSI/CommonDataModel.git
+    dest: "{{ data_download_dir }}/ohdsi/common_data_model"
+    version: "{{ data_cdm_version }}"
+
+- name: create sql dir
+  file:
+    dest: "{{ data_download_dir }}/ohdsi/sql"
+    state: directory
+
+- name: find files sql files in cdm repo
+  find:
+    paths: "{{ data_download_dir }}/ohdsi/common_data_model/PostgreSQL/"
+    patterns: "*.sql"
+    recurse: yes
+  register: files_matched_subdirectory
+
+- name: copy cdm sql to common sql dir
+  copy:
+    src: "{{ item.path }}"
+    dest: "{{ data_download_dir }}/ohdsi/sql/"
+    remote_src: yes
+  with_items:
+  - "{{ files_matched_subdirectory.files }}"
+
+- name: create sql for {{ data_dataset }}
+  include_role:
+    name: cdm
+    tasks_from: build_sql
+
+- name: "load {{ data_dataset }} schema"
+  include_role:
+    name: cdm
+    tasks_from: load
+  vars:
+    schema: "{{ data_dataset }}"
+
+- name: "link {{ data_dataset }} to web api"
+  include_role:
+    name: cdm
+    tasks_from: link
+  vars:
+    schema: "{{ data_dataset }}"
+  when: create_source_daimon_entry

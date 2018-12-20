@@ -7,19 +7,19 @@
     state: latest
     update_cache: true
 
-- name: Download latest atlas release
-  unarchive:
-    src: https://github.com/OHDSI/Atlas/archive/released.zip
-    dest: "{{ www_download_dir }}"
-    creates: "{{ www_download_dir }}/Atlas-released"
-    remote_src: yes
+- name: clone ohdsi atlas
+  git:
+    repo: https://github.com/OHDSI/Atlas.git
+    dest: "{{ www_download_dir }}/Atlas-released"
+    version: v2.6.0
 
 - name: deploy app
   synchronize:
     src: "{{ www_download_dir }}/Atlas-released/"
     dest: /var/lib/tomcat8/webapps/atlas/
+    archive: no
+    recursive: yes
     checksum: yes
-    times: no
   delegate_to: "{{ inventory_hostname }}"
 
 - name: copy local config

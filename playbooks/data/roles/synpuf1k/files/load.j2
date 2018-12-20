@@ -1,0 +1,5 @@
+-- Build dynamically using contents of {{ item.directory }}
+{% for file in item.files %}
+{% set file_name = file.path | basename -%}
+COPY {{ file_name.split('.')[0] | upper }} FROM '{{ item.directory }}/{{ file_name }}' {{ item.arguments }};
+{% endfor %}

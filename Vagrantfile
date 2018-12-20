@@ -1,8 +1,20 @@
-VAGRANTFILE_API_VERSION = "2"
-
+VGRANTFILE_API_VERSION = "2"
 Vagrant.configure("2") do |config|
-  config.vm.box = "bento/ubuntu-16.04"
-  config.vm.synced_folder "src/", "/vagrant"
+  required_plugins = %w(vagrant-vbguest vagrant-disksize)
+  _retry = false
+  required_plugins.each do |plugin|
+    unless Vagrant.has_plugin? plugin
+      system "vagrant plugin install #{plugin}"
+      _retry=true
+    end
+  end
+  if (_retry)
+    exec "vagrant " + ARGV.join(' ')
+  end
+
+  config.vm.box = "ubuntu/xenial64"
+  config.vm.synced_folder "src/", "/vagrant", disabled: false
+  config.disksize.size = '50GB'
 
   config.vm.provider :virtualbox do |v|
     v.memory = 2048

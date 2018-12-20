@@ -1,9 +1,46 @@
 ---
+# delimiter args used to generate sql COPY commands
+# defaults to "DELIMITER E'\t' CSV ENCODING 'UTF8"
+
 - hosts: data
   become: yes
+  tasks:
+  - include_role:
+      name: vocabulary
+    vars:
+      data_dataset: "vocabulary"
+      results_schema: false
+      create_source_daimon_entry: false
+      delimiter: DELIMITER E'\t' CSV HEADER QUOTE E'\b'
 
-  roles:
-    - download_data
-    - load_data
-    - achilles
+  # TODO consider moving data_dataset, data_dataset_name, etc, back to top level so
+  # TODO only have to define vars in one place and then loop over all here.
+  - name: load synpuf1k
+    block:
+      - include_role:
+          name: synpuf1k
 
+      - include_role:
+          name: achilles
+    vars:
+      data_dataset: "synpuf1k"
+      data_dataset_name: "SYNPUF 1k"
+      source_id: 1
+      results_schema: true
+      create_source_daimon_entry: true
+      delimiter: DELIMITER E'\t' CSV ENCODING 'UTF8'
+
+#  - name: load synpuf5pct
+#    block:
+#    - include_role:
+#        name: synpuf5pct
+#
+#    - include_role:
+#        name: achilles
+#    vars:
+#      data_dataset: "synpuf5pct"
+#      data_dataset_name: "SYNPUF 5%"
+#      source_id: 2
+#      results_schema: true
+#      create_source_daimon_entry: true
+#      delimiter: DELIMITER E'\t' CSV ENCODING 'UTF8'

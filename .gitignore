@@ -2,6 +2,7 @@
 .vagrant
 .data
 *.retry
+*.log
 
 # provisioning details dont want to check in
 provisioning/.*

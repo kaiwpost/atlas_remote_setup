@@ -1,0 +1,9 @@
+---
+
+- name: download_data
+  include_tasks:
+    file: download.yml
+
+- name: load data
+  include_role:
+    name: cdm

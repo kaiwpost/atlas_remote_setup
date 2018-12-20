@@ -1,13 +1,9 @@
-{% set db_host = hostvars[groups['db'][0]].inventory_hostname %}
-ALTER SCHEMA {{ data_dataset }}
-  OWNER TO ohdsi_admin;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {{ data_dataset }} TO ohdsi_admin;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {{ data_dataset }} TO ohdsi_admin;
+{% set db_host = hostvars [ groups ['db'][0]].inventory_hostname %}
 
 INSERT INTO webapi.source (source_id, source_name, source_key, source_connection, source_dialect)
 VALUES (1,
-        '{{ data_dataset_name }}',
-        '{{ data_dataset }}',
+        'SYNPUF 1K',
+        'synpuf1k',
         'jdbc:postgresql://{{db_host}}:{{db_port}}/{{db_name}}?user={{db_admin_user}}&password={{db_admin_user_password}}',
         'postgresql')
 ON CONFLICT (source_id) DO UPDATE
@@ -16,12 +12,11 @@ ON CONFLICT (source_id) DO UPDATE
     source_connection = EXCLUDED.source_connection;
 
 INSERT INTO webapi.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority)
-VALUES (1, 1, 0, '{{ data_dataset }}', 2),
-       (2, 1, 1, '{{ data_dataset }}', 2),
-       (3, 1, 2, 'webapi', 2),
-       (4, 1, 3, 'webapi', 2)
+VALUES (1, 1, 0, 'synpuf1k', 2),
+       (2, 1, 1, 'vocabulary', 2),
+       (3, 1, 2, 'synpuf1k_results', 2)
 ON CONFLICT (source_daimon_id) DO UPDATE
-  SET source_id = EXCLUDED.source_id,
-    daimon_type = EXCLUDED.daimon_type,
+  SET source_id     = EXCLUDED.source_id,
+    daimon_type     = EXCLUDED.daimon_type,
     table_qualifier = EXCLUDED.table_qualifier,
-    priority = EXCLUDED.priority;
+    priority        = EXCLUDED.priority;

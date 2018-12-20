@@ -11,14 +11,13 @@ before_install:
 install:
   - pip install ansible
 
-## TODO 3 of alter default privileges using postgresql_privs module always report
-## TODO changes. Leave for now.
-
+# TODO can uncomment below if using different test server than travis and actually want to
+# TODO test full build could use bottom two tests
 script:
   - ansible-playbook -i provisioning/tests/inventory configure.yml --syntax-check
 #  - ansible-playbook -i provisioning/tests/inventory configure.yml --connection=local --become
 #  - >
 #  ansible-playbook -i provisioning/tests/inventory configure.yml --connection=local --become
-#  | grep -q 'changed=3.*failed=0'
+#  | grep -q 'changed=0.*failed=0'
 #  && (echo 'Idempotence test: pass' && exit 0)
 #  || (echo 'Idempotence test: fail' && exit 1)

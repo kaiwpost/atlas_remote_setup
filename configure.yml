@@ -1,6 +1,5 @@
 ---
 
-#TODO simplify / cleanup directory structure in download / load data
 - import_playbook: playbooks/db/main.yml
 - import_playbook: playbooks/www/main.yml
 - import_playbook: playbooks/data/main.yml

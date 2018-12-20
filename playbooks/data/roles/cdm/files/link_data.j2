@@ -1,0 +1,23 @@
+{% set db_host = hostvars [ groups ['db'][0]].inventory_hostname %}
+
+INSERT INTO webapi.source (source_id, source_name, source_key, source_connection, source_dialect)
+VALUES ({{ source_id }},
+        '{{ data_dataset_name }}',
+        '{{ data_dataset }}',
+        'jdbc:postgresql://{{db_host}}:{{db_port}}/{{db_name}}?user={{db_admin_user}}&password={{db_admin_user_password}}',
+        'postgresql')
+ON CONFLICT (source_id) DO UPDATE
+  SET source_name     = EXCLUDED.source_name,
+    source_key        = EXCLUDED.source_key,
+    source_connection = EXCLUDED.source_connection;
+
+INSERT INTO webapi.source_daimon (source_daimon_id, source_id, daimon_type, table_qualifier, priority)
+VALUES ({{ (source_id * 4) - 3}}, {{ source_id }}, 0, '{{ data_dataset }}', 0),
+       ({{ (source_id * 4) - 2}}, {{ source_id }}, 1, 'vocabulary', 0),
+       ({{ (source_id * 4) - 1}}, {{ source_id }}, 2, '{{ data_dataset }}_results', 0)
+ON CONFLICT (source_id, source_daimon_id) DO UPDATE
+  SET source_id     = EXCLUDED.source_id,
+    source_daimon_id = EXCLUDED.source_daimon_id,
+    daimon_type     = EXCLUDED.daimon_type,
+    table_qualifier = EXCLUDED.table_qualifier,
+    priority        = EXCLUDED.priority;

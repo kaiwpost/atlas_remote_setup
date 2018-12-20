@@ -8,13 +8,25 @@
   apt_repository:
     repo: deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/
 
-- name: Install R, and requirements
+- name: Install R
   apt:
     name:
+      - r-base
       - r-base-dev
-      - libcurl4-openssl-dev
-      - libssl-dev
+      - r-recommended
+    state: latest
+    update_cache: true
+  tags: packages
+
+- name: Install requirements
+  apt:
+    name:
+      - libcurl4-gnutls-dev
+      - libgit2-dev
       - libxml2-dev
+      - libssl-dev
+      - libz-dev
+      - libudunits2-dev
       - openjdk-8-jdk
     state: latest
     update_cache: true
@@ -22,10 +34,9 @@
 
 - name: configure rJava
   shell: R CMD javareconf > "{{data_download_dir}}/rJava.log"
-  args:
-    creates: "{{data_download_dir}}/rJava.log"
+  changed_when: false
 
-- name: install r - packages
+- name: copy R install script
   copy:
     src: "{{ role_path }}/files/install_packages.R"
     dest: "{{ data_download_dir }}/install_packages.R"
@@ -50,13 +61,17 @@
 - name: copy run_achilles.j2 to server
   template:
      src: "{{ role_path }}/files/run_achilles.j2"
-     dest: "{{ data_download_dir }}/run_achilles.R"
+     dest: "{{ data_download_dir }}/{{ data_dataset }}_run_achilles.R"
      mode: a+x
 
 - name: run achilles
-  command: "{{ data_download_dir }}/run_achilles.R"
+  command: "{{ data_download_dir }}/{{ data_dataset}}_run_achilles.R"
   args:
-    creates: "{{ data_download_dir }}/output/log_achilles.txt"
-  notify:
-    - restart tomcat
-    - verify WebAPI
+    creates: "{{ data_download_dir }}/{{ data_dataset }}_achilles.log"
+  register: achilles
+
+- name: "create {{ data_dataset }}_achilles.log"
+  copy:
+    content: "{{ achilles }}"
+    dest: "{{ data_download_dir }}/{{ data_dataset }}_achilles.log"
+    force: no

@@ -6,10 +6,15 @@ Mainly intended to help with setting up for development. Still very much a work 
 
 ## Dependencies
 * [ansible 2.7+](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
-* [Vagrant 2.2.0](https://www.vagrantup.com/intro/getting-started/install.html)
-* [Virtual Box 5.2.20](https://www.vagrantup.com/intro/getting-started/install.html)
+* [jmespath](https://pypi.org/project/jmespath/)
+* [Vagrant 2.2.2](https://www.vagrantup.com/intro/getting-started/install.html)
+* [Virtual Box 5.2.22](https://www.vagrantup.com/intro/getting-started/install.html)
 
 ## Running
+* Install dependencies
+    ```
+    pip install ansible jmespath
+    ```
 ### Local environment
 * `vagrant up`
 * Once ansible finishes: 

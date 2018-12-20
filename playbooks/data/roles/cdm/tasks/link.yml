@@ -1,0 +1,34 @@
+---
+
+# http://www.ohdsi.org/web/wiki/doku.php?id=documentation:software:webapi:source_configuration
+- name: add entry to webapi.source and webapi.source_daimon
+  shell: "psql ohdsi -f '{{ data_dataset }}_link_data.sql'"
+  become: true
+  become_user: postgres
+  args:
+    chdir: "{{data_download_dir}}/ohdsi/sql"
+    creates: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_add_daemons.log"
+  register: link
+
+- name: "create {{ data_dataset }}_add_daemons_run.log"
+  copy:
+    content: "{{ link }}"
+    dest: "{{data_download_dir}}/ohdsi/sql/{{ data_dataset }}_add_daemons.log"
+    force: no
+
+- set_fact:
+    www_url:  http://{{ hostvars[groups['www'][0]].inventory_hostname }}:{{ www_port }}
+
+- name: refresh sources
+  uri:
+    url: "{{www_url}}/WebAPI/source/refresh"
+  register: response
+
+- set_fact:
+    json_response: "{{ response.json | json_query('[*].sourceKey') }}"
+
+- name: "fail when {{ data_dataset }} not in sources"
+  fail:
+    msg: "{{ data_dataset }} not found in at {{www_url}}/WebAPI/source/sources"
+  when: data_dataset not in json_response
+

@@ -1,9 +1,0 @@
----
-  - include_role:
-      name: download_data/roles/download_{{ data_dataset }}
-
-  - include_role:
-      name: download_data/roles/download_vocabulary
-
-  - include_role:
-      name: load_data

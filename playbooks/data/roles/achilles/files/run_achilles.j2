@@ -9,7 +9,7 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              schema = "{{ data_dataset }}")
 achillesResults<-achilles(connectionDetails,
                           cdmDatabaseSchema="{{ data_dataset }}",
-                          resultsDatabaseSchema="webapi",
+                          resultsDatabaseSchema="{{ data_dataset }}_results",,
                           sourceName="{{ data_dataset_name }}",
                           cdmVersion="5",
-                          vocabDatabaseSchema="{{ data_dataset }}")
+                          vocabDatabaseSchema="vocabulary")

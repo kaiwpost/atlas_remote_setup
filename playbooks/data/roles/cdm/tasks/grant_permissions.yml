@@ -1,0 +1,20 @@
+---
+
+- name: assign privileges
+  block:
+    - name: create "{{ schema }}" schema
+      postgresql_schema:
+        name: "{{ schema }}"
+        database: "{{ db_name }}"
+        owner: ohdsi_admin
+
+    - name: grant SELECT,INSERT,UPDATE,DELETE on {{db_name}}.{{schema}} to ohdsi_admin
+      shell: 'psql {{ db_name }} -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {{ schema }} TO ohdsi_admin;"'
+      changed_when: false
+
+    - name: grant EXECUTE on {{db_name}}.{{schema}} FUNCTIONS to ohdsi_admin
+      shell: 'psql {{ db_name }} -c "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {{ schema }} TO ohdsi_admin;"'
+      changed_when: false
+
+  become: true
+  become_user: postgres

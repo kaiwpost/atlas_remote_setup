@@ -93,6 +93,7 @@
         privs: CONNECT,TEMPORARY
         type: database
         role: ohdsi_app
+
   become: true
   become_user: postgres
 

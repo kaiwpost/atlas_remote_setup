@@ -1,0 +1,7 @@
+---
+
+- include: upload.yml
+
+- name: load data
+  include_role:
+    name: cdm

@@ -13,7 +13,9 @@
   git:
     repo: https://github.com/OHDSI/WebAPI.git
     dest: "{{ www_download_dir }}/WebAPI"
-    version: v2.6.0
+# TODO  Build fails if try to pin to v2.6.0 revisit once there is a v2.7.0
+#   https://github.com/OHDSI/WebAPI/pull/708
+#   version: v2.6.0
 
 - name: Ensures {{www_download_dir}}/WebAPI/WebAPIConfig dir exists
   file: path={{www_download_dir}}/WebAPI/WebAPIConfig state=directory
@@ -57,6 +59,13 @@
   template:
     src: "{{ role_path }}/files/webapi_link.j2"
     dest: "{{ www_download_dir }}/webapi_link.sql"
+
+# to allow for upserts
+- name: add constraint to webpai.source_daimon
+  shell: "psql {{ db_name }} -c 'CREATE UNIQUE INDEX IF NOT EXISTS source_id_source_daimon_id ON webapi.source_daimon(source_id, source_daimon_id)'"
+  become: yes
+  become_user: postgres
+  changed_when: false
 
 - name: link webapi.source and webapi.source_daimon and confirm configuration is correct
   shell: "psql -tAX ohdsi -f {{ www_download_dir }}/webapi_link.sql | {{ www_download_dir }}/count_rows.sh"
