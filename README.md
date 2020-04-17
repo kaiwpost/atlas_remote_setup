@@ -5,6 +5,8 @@ Builds and installs [OHDSI ATLAS](https://www.ohdsi.org/atlas-a-unified-interfac
 Mainly intended to help with setting up for development. Still very much a work in progress. The local deployement will use the VM but
 the server deployment will use the Tomcat installed on the server.  
 
+A similar GitHub repo using playbooks to deploy can be found at https://github.com/cid-harvard/atlas-playbooks and can help give some guidance on setting things up.
+
 ## Dependencies
 * [ansible 2.7+](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 * [jmespath](https://pypi.org/project/jmespath/)
