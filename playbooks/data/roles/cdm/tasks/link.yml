@@ -2,7 +2,7 @@
 
 # http://www.ohdsi.org/web/wiki/doku.php?id=documentation:software:webapi:source_configuration
 - name: add entry to webapi.source and webapi.source_daimon
-  shell: "psql ohdsi -f '{{ data_dataset }}_link_data.sql'"
+  shell: "psql {{ db_name }} -f '{{ data_dataset }}_link_data.sql'"
   become: true
   become_user: postgres
   args:

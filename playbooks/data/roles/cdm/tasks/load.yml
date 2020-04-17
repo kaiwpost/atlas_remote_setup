@@ -14,7 +14,7 @@
     become_user: postgres
 
   - name: load data
-    shell: "PGOPTIONS='--search_path={{ data_dataset }}' psql -d ohdsi -f '{{ item }}'"
+    shell: "PGOPTIONS='--search_path={{ data_dataset }}' psql -d {{ db_name }} -f '{{ item }}'"
     become: true
     become_user: postgres
     args:
@@ -51,7 +51,7 @@
     become_user: postgres
 
   - name: create "{{ schema }}_results" schema
-    shell: "PGOPTIONS='--search_path={{ data_dataset }}_results' psql -d ohdsi -f '{{ item }}'"
+    shell: "PGOPTIONS='--search_path={{ data_dataset }}_results' psql -d {{ db_name }} -f '{{ item }}'"
     become: true
     become_user: postgres
     args:

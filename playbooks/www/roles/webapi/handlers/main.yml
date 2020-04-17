@@ -8,14 +8,14 @@
   wait_for: port={{  www_port }} delay=5
   listen: "restart tomcat"
 
-- name: verify WebAPI is back up
+- name: verify {{ web_api_app_name }} is back up
   uri: url=http://{{ hostvars[groups['www'][0]].inventory_hostname }}:{{ www_port }} return_content=true timeout=300
   register: response
   failed_when: "'It works !' not in response.content"
   listen: "restart tomcat"
 
 - name: verify sources
-  uri: url=http://{{ hostvars[groups['www'][0]].inventory_hostname }}:{{ www_port }}/WebAPI/source/sources return_content=true timeout=300
+  uri: url=http://{{ hostvars[groups['www'][0]].inventory_hostname }}:{{ www_port }}/{{ web_api_app_name }}/source/sources return_content=true timeout=300
   register: response
   failed_when: "'sourceId' not in response.content"
   listen: "verify WebAPI"

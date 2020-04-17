@@ -12,19 +12,19 @@
 - name: clone ohdsi webapi
   git:
     repo: https://github.com/OHDSI/WebAPI.git
-    dest: "{{ www_download_dir }}/WebAPI"
+    dest: "{{ www_download_dir }}/{{ web_api_app_name}}"
 # TODO  Build fails if try to pin to v2.6.0 revisit once there is a v2.7.0
 #   https://github.com/OHDSI/WebAPI/pull/708
 #   version: v2.6.0
 
-- name: Ensures {{www_download_dir}}/WebAPI/WebAPIConfig dir exists
-  file: path={{www_download_dir}}/WebAPI/WebAPIConfig state=directory
+- name: Ensures {{www_download_dir}}/{{ web_api_app_name }}/WebAPIConfig dir exists
+  file: path={{www_download_dir}}/{{ web_api_app_name }}/WebAPIConfig state=directory
 
 - name: copy settings.j2 file to remote server
   template:
     src: "{{ role_path }}/files/settings.j2"
-    dest: "{{ www_download_dir }}/WebAPI/WebAPIConfig/settings.xml"
-
+    dest: "{{ www_download_dir }}/{{ web_api_app_name }}/WebAPIConfig/settings.xml"
+    
 # echo $(readlink -f /usr/bin/javac | sed 's:/bin/javac::')
 - name: set JAVA_HOME
   lineinfile:
@@ -32,16 +32,16 @@
     regexp: '^JAVA_HOME='
     line: 'JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64'
 
-- name: build WebAPI
+- name: build {{ web_api_app_name }}
   command: mvn clean package -s WebAPIConfig/settings.xml -P webapi-postgresql
   args:
-    chdir: "{{ www_download_dir }}/WebAPI"
-    creates: "{{ www_download_dir }}/WebAPI/target/WebAPI.war"
+    chdir: "{{ www_download_dir }}/{{ web_api_app_name }}"
+    creates: "{{ www_download_dir }}/{{ web_api_app_name }}/target/{{ web_api_app_name }}.war"
 
 - name: deploy WAR
-  command: "cp {{ www_download_dir }}/WebAPI/target/WebAPI.war /var/lib/tomcat8/webapps/"
+  command: "cp {{ www_download_dir }}/{{ web_api_app_name }}/target/{{ web_api_app_name }}.war /var/lib/tomcat8/webapps/"
   args:
-    creates: "/var/lib/tomcat8/webapps/WebAPI.war"
+    creates: "/var/lib/tomcat8/webapps/{{ web_api_app_name }}.war"
   register: result
   notify:
     - restart tomcat
@@ -68,12 +68,12 @@
   changed_when: false
 
 - name: link webapi.source and webapi.source_daimon and confirm configuration is correct
-  shell: "psql -tAX ohdsi -f {{ www_download_dir }}/webapi_link.sql | {{ www_download_dir }}/count_rows.sh"
+  shell: "psql -tAX {{ db_name }} -f {{ www_download_dir }}/webapi_link.sql | {{ www_download_dir }}/count_rows.sh"
   become: true
   become_user: postgres
   register: rows_inserted
   changed_when: rows_inserted.stdout != "0"
   notify:
       - restart tomcat
-      - verify WebAPI
+      - verify {{ web_api_app_name }}
 

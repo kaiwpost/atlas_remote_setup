@@ -2,3 +2,5 @@
 
 www_download_dir: /vagrant/www
 www_port: 8080
+web_api_app_name: WebAPI
+atlas_app_name: Atlas

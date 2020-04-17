@@ -16,7 +16,7 @@
 - name: deploy app
   synchronize:
     src: "{{ www_download_dir }}/Atlas-released/"
-    dest: /var/lib/tomcat8/webapps/atlas/
+    dest: /var/lib/tomcat8/webapps/{{ atlas_app_name }}/
     archive: no
     recursive: yes
     checksum: yes
@@ -25,7 +25,7 @@
 - name: copy local config
   template:
     src: "{{ role_path }}/files/config-local.j2"
-    dest: /var/lib/tomcat8/webapps/atlas/js/config-local.js
+    dest: /var/lib/tomcat8/webapps/{{ atlas_app_name }}/js/config-local.js
   notify:
     - restart tomcat
     - verify WebAPI
