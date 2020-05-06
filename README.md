@@ -5,8 +5,6 @@ Builds and installs [OHDSI ATLAS](https://www.ohdsi.org/atlas-a-unified-interfac
 Mainly intended to help with setting up for development. Still very much a work in progress. The local deployement will use the VM but
 the server deployment will use the Tomcat installed on the server.  
 
-A similar GitHub repo using playbooks to deploy can be found at https://github.com/cid-harvard/atlas-playbooks and can help give some guidance on setting things up.
-
 ## Dependencies
 * [ansible 2.7+](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 * [jmespath](https://pypi.org/project/jmespath/)
@@ -43,7 +41,7 @@ These steps are used for setting up a local virtual machine that can run an inst
     * Then run the playbook `ansible-playbook -i provisioning/server/inventory configure.yml --become`
         * This assumes that the ssh user came run commands as `sudo`
 
-###Using Windows for Deployment or Local Build
+### Using Windows for Deployment or Local Build
 
 The playbooks are not compatible with a normal Windows environment but can be used with the Windows Subsystem for Linux (WSL) [https://docs.microsoft.com/en-us/windows/wsl/install-win10](https://docs.microsoft.com/en-us/windows/wsl/install-win10).  This lets you run an instance of Linux from inside Windows 10.  
 
@@ -59,7 +57,7 @@ To run from the playbooks from WSL instance:
 		* The data_download_dir is the directory on the remote server where all of the files will be copied to
 	* `[LocalGitRepo]/provisioning/vagrant/group_vars/db.yml`
 		* The db_name is where the database will be deployed. Be sure this is a database that does NOT exist on the machine already or you may risk overwriting data
-	* [LocalGitRepo]/provisioning/vagrant/group_vars/www.yml
+	* `[LocalGitRepo]/provisioning/vagrant/group_vars/www.yml`
 		* The `www_download_dir` is the directory on the remote server where the web server files will be copied
 	* `[LocalGitRepo]/playbooks/www/roles/atlas/tasks/main.yml`
 		* Check the Atlas version listed to ensure the correct version is obtained from GitHub
